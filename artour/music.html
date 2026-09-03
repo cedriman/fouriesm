@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>FouriesM AR Platform</title>
+
+<link rel="stylesheet" href="assets/css/bootstrap.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/bootstrap-icons.min.css">
+<script src="assets/js/aframe.min.js"></script>
+<script src="assets/js/mindar-image-aframe.prod.js"></script>
+<style>
+
+#ar-music {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+#ar-music.show {
+    display: flex;
+}
+
+#ar-music .music-content {
+    width: min(94vw, 600px);
+    padding: 10px;
+    pointer-events: auto;
+}
+
+.music-card {
+    background: rgba(0,0,0,.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 25px;
+    padding: 20px;
+    color: white;
+    text-align: center;
+    box-shadow:
+        0 15px 40px rgba(0,0,0,.6);
+}
+
+.music-thumbnail {
+    width: min(70vw, 320px);
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+    margin: 0 auto;
+    border-radius: 20px;
+    box-shadow:
+        0 10px 30px rgba(0,0,0,.5);
+}
+
+.music-title {
+    margin-top: 18px;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.music-artist {
+    margin-top: 5px;
+    margin-bottom: 18px;
+    color: rgba(255,255,255,.65);
+}
+
+#audioPlayer {
+    width: 100%;
+}
+
+.music-navigation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 18px;
+}
+
+.music-navigation button {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+#musicPlay {
+    width: 58px;
+    height: 58px;
+    font-size: 1.4rem;
+}
+
+.music-counter {
+    margin-top: 15px;
+    color: rgba(255,255,255,.6);
+    font-size: .85rem;
+}
+
+.music-dots {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+    margin-top: 12px;
+}
+
+.music-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.4);
+    cursor: pointer;
+    transition: .2s;
+}
+
+.music-dot.active {
+    width: 22px;
+    border-radius: 10px;
+    background: #e60000;
+}
+
+@media (max-width: 576px) {
+    .music-content {
+        width: 95vw;
+        padding: 7px;
+    }
+
+    .music-card {
+        padding: 15px;
+        border-radius: 20px;
+    }
+
+    .music-thumbnail {
+        width: min(70vw, 280px);
+    }
+}
+
+@media (
+    max-height: 500px
+) and (
+    orientation: landscape
+) {
+    .music-content {
+        width: min(70vw, 550px);
+    }
+
+    .music-thumbnail {
+        width: 180px;
+    }
+
+    .music-card {
+        padding: 10px;
+    }
+
+    .music-title {
+        margin-top: 8px;
+    }
+}
+
+@media (min-width: 992px) {
+    .music-content {
+        width: min(55vw, 600px);
+    }
+}
+
+</style>
+</head>
+<body>
+
+<div id="custom-loading">
+  <div class="loading-container">
+    <img class="loading-photo" src="../assets/images/fsb7.jpg" />
+  </div>
+  <div class="loading-text">Loading...</div>
+</div>
+
+<!-- YOUR SCANNING HTML STAYS EXACTLY THE SAME -->
+<div id="example-scanning-overlay">
+  <div class="inner">
+    <div class="scanline"></div>
+    <img src="../assets/images/fsb7.jpg" />
+  </div>
+</div>
+
+
+<!-- FALLBACK PRE-LOAD HUD -->
+<div class="bg-primary text-center" id="status">FouriesM AR Platform</div>
+
+<div id="ar-music">
+    <div class="music-content">
+        <div class="music-card">
+            <img id="musicThumbnail" class="music-thumbnail" src="../assets/images/fsb7.jpg" alt="Song thumbnail">
+            <div id="musicTitle" class="music-title">
+                Fouriesburg Song 1
+            </div>
+            <div id="musicArtist" class="music-artist">
+                Fouriesburg Music
+            </div>
+
+            <audio id="audioPlayer" controls preload="metadata">
+                <source id="audioSource" src="" type="audio/mpeg">
+                Your browser does not support audio.
+            </audio>
+
+            <div class="music-navigation">
+               <button
+                    id="musicPrev" class="btn btn-outline-light" type="button">
+                    <i class="bi bi-skip-backward-fill"></i>
+                </button>
+
+                <button id="musicPlay" class="btn btn-danger" type="button" >
+                    <i class="bi bi-play-fill"></i>
+                </button>
+                <button id="musicNext" class="btn btn-outline-light" type="button">
+                    <i class="bi bi-skip-forward-fill"></i>
+                </button>
+            </div>
+            <div id="musicCounter" class="music-counter">
+                1 / 3
+            </div>
+
+            <div id="musicDots" class="music-dots"
+            ></div>
+        </div>
+    </div>
+</div>
+
+<a-scene mindar-image="imageTargetSrc: fouriesm.mind; uiLoading: #custom-loading; uiScanning: #example-scanning-overlay;" embedded xr-mode-ui="enabled:false" device-orientation-permission-ui="enabled:false" color-space="sRGB" renderer="colorManagement:true">
+  <a-camera position="0 0 0"></a-camera>
+  <a-entity mindar-image-target="targetIndex:0">
+     <a-plane position="0 0 0" width="2" height="1.2" color="#ffffff" opacity="0"></a-plane>
+  </a-entity>
+  
+  <a-entity mindar-image-target="targetIndex:1">
+     <a-plane position="0 0 0" width="2" height="1.2" color="#ffffff" opacity="0"></a-plane>
+  </a-entity>
+  
+  <a-entity mindar-image-target="targetIndex:2">
+     <a-plane position="0 0 0" width="2" height="1.2" color="#ffffff" opacity="0"></a-plane>
+  </a-entity>
+</a-scene>
+
+<script>
+
+const songs = [
+    {
+        audio: "assets/music/song1.mp3",
+        thumbnail: "../assets/images/fsb9.jpg",
+        title: "Fouriesburg Song 1",
+        artist: "Fouriesburg Music"
+    },
+    {
+        audio: "assets/music/song2.mp3",
+        thumbnail: "../assets/images/dms1.jpg",
+        title: "Fouriesburg Song 2",
+        artist: "Fouriesburg Music"
+    },
+    {
+        audio: "assets/music/song3.mp3",
+        thumbnail: "../assets/images/fsb7.jpg",
+        title: "Fouriesburg Song 3",
+        artist: "Fouriesburg Music"
+    }
+];
+
+const target =
+    document.querySelector(
+        "[mindar-image-target]"
+    );
+const musicAR =
+    document.querySelector(
+        "#ar-music"
+    );
+const audioPlayer =
+    document.querySelector(
+        "#audioPlayer"
+    );
+const audioSource =
+    document.querySelector(
+        "#audioSource"
+    );
+const musicThumbnail =
+    document.querySelector(
+        "#musicThumbnail"
+    );
+const musicTitle =
+    document.querySelector(
+        "#musicTitle"
+    );
+const musicArtist =
+    document.querySelector(
+        "#musicArtist"
+    );
+const musicCounter =
+    document.querySelector(
+        "#musicCounter"
+    );
+const musicDots =
+    document.querySelector(
+        "#musicDots"
+    );
+const musicPlay =
+    document.querySelector(
+        "#musicPlay"
+    );
+const status =
+    document.querySelector(
+        "#status"
+    );
+let currentSong = 0;
+
+songs.forEach(
+    (song, index) => {
+        const dot =
+            document.createElement(
+                "div"
+            );
+        dot.className =
+            "music-dot";
+
+        if (index === 0) {
+            dot.classList.add(
+                "active"
+            );
+        }
+
+        dot.addEventListener(
+            "click",
+            () => {
+                currentSong = index;
+                showSong();
+            }
+        );
+        musicDots.appendChild(
+            dot
+        );
+    }
+);
+
+function showSong() {
+    const song = songs[currentSong];
+  audioPlayer.pause();
+    audioSource.src = song.audio;
+    musicThumbnail.src = song.thumbnail;
+    musicTitle.textContent = song.title;
+    musicArtist.textContent = song.artist;
+    musicCounter.textContent = `${currentSong + 1} / ${songs.length}`;
+    audioPlayer.load();
+    musicPlay.innerHTML =
+        '<i class="bi bi-play-fill"></i>';
+
+        document
+        .querySelectorAll(
+            ".music-dot"
+        )
+        .forEach(
+            (dot, index) => {
+                dot.classList.toggle(
+                    "active",
+                    index === currentSong
+                );
+            }
+        );
+}
+
+document
+    .querySelector("#musicNext")
+    .addEventListener(
+        "click",
+        () => {
+            currentSong++;
+            if (
+                currentSong >=
+                songs.length
+            ) {
+                currentSong = 0;
+            }
+            showSong();
+        }
+    );
+
+document
+    .querySelector("#musicPrev")
+    .addEventListener(
+        "click",
+        () => {
+            currentSong--;
+            if (
+                currentSong < 0
+            ) {
+                currentSong =
+                    songs.length - 1;
+            }
+            showSong();
+        }
+    );
+musicPlay.addEventListener(
+    "click",
+    () => {
+        if (
+            audioPlayer.paused
+        ) {
+            audioPlayer.play();
+        }
+        else {
+            audioPlayer.pause();
+        }
+    }
+);
+
+audioPlayer.addEventListener(
+    "play",
+    () => {
+        musicPlay.innerHTML =
+            '<i class="bi bi-pause-fill"></i>';
+    }
+);
+
+audioPlayer.addEventListener(
+    "pause",
+    () => {
+        musicPlay.innerHTML =
+            '<i class="bi bi-play-fill"></i>';
+    }
+);
+
+audioPlayer.addEventListener(
+    "ended",
+    () => {
+        currentSong++;
+        if (
+            currentSong >=
+            songs.length
+        ) {
+            currentSong = 0;
+        }
+        showSong();
+    }
+);
+
+target.addEventListener(
+    "targetFound",
+    () => {
+        console.log(
+            "TARGET FOUND"
+        );
+        musicAR.classList.add(
+            "show"
+        );
+        status.style.display =
+            "block";
+        currentSong = 0;
+        showSong();
+    }
+);
+
+target.addEventListener(
+    "targetLost",
+    () => {
+        console.log(
+            "TARGET LOST"
+        );
+        musicAR.classList.remove(
+            "show"
+        );
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+
+        status.style.display =
+            "none";
+    }
+);
+
+showSong();
+
+</script>
+
+</body>
+
+</html>

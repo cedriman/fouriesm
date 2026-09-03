@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FouriesM AR Platform</title>
+
+<!-- External Style Libraries -->
+<link rel="stylesheet" href="assets/css/bootstrap.min.css">
+<link rel="stylesheet" href="assets/css/bootstrap-icons.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/button.css">
+<script src="assets/js/aframe.min.js"></script>
+<script src="assets/js/mindar-image-aframe.prod.js"></script>
+<script defer src="assets/js/button.js"></script>
+
+
+</head>
+<body>
+
+
+<div id="custom-loading">
+  <div class="loading-container">
+    <img class="loading-photo" src="../assets/images/fsb7.jpg" />
+  </div>
+  <div class="loading-text">Loading...</div>
+</div>
+
+<!-- YOUR SCANNING HTML STAYS EXACTLY THE SAME -->
+<div id="example-scanning-overlay">
+  <div class="inner">
+    <div class="scanline"></div>
+    <img src="../assets/images/fsb7.jpg" />
+  </div>
+</div>
+
+
+<!-- FALLBACK PRE-LOAD HUD -->
+<div class="bg-primary text-center" id="status">FouriesM AR Platform</div>
+
+<!-- CORE INTERFACE GRID LAYER -->
+<div class="container" id="dashboard">
+  
+  <img class="img-fluid mb-2" src="../assets/images/fsb7.jpg">
+
+<div class="grid">
+
+  <button class="liquid-glass-btn text-light" id="video">
+      <i class="bi bi-play-btn"></i>
+      <span>Videos</span>
+      <div class="shine"></div>
+  </button>
+  
+  <button class="liquid-glass-btn text-light" id="gallery">
+      <i class="bi bi-images"></i>
+      <span>Gallery</span>
+      <div class="shine"></div>
+  </button>
+  
+  <button class="liquid-glass-btn text-light" id="music">
+      <i class="bi bi-music-note-beamed"></i>
+      <span>Music</span>
+      <div class="shine"></div>
+  </button>
+  
+  <button class="liquid-glass-btn text-light" id="leadership">
+      <i class="bi bi-badge-3d"></i>
+      <span>3d Models</span>
+      <div class="shine"></div>
+  </button>
+  
+  <button class="liquid-glass-btn text-light" id="info">
+      <i class="bi bi-backpack3"></i>
+      <span>Adventures</span>
+      <div class="shine"></div>
+  </button>
+  
+  <button class="liquid-glass-btn text-light" id="contact">
+      <i class="bi bi-telephone"></i>
+      <span>Contacts</span>
+      <div class="shine"></div>
+  </button>
+  
+  <button class="liquid-glass-btn text-light" id="news">
+      <i class="bi bi-building-fill"></i>
+      <span>Accomodations</span>
+      <div class="shine"></div>
+  </button>
+  
+  <button class="liquid-glass-btn text-light" id="membership">
+      <i class="bi bi-cloud-sun-fill"></i>
+      <span>Weather</span>
+      <div class="shine"></div>
+  </button>
+  
+  <button class="liquid-glass-btn text-light" id="history">
+      <i class="bi bi-journal-text"></i>
+      <span>History</span>
+      <div class="shine"></div>
+  </button>
+</div>
+
+</div>
+
+
+  </div>
+
+<!-- WEBGL CANVAS PLATFORM LAYER -->
+<a-scene mindar-image="imageTargetSrc: fouriesm.mind; uiLoading: #custom-loading; uiScanning: #example-scanning-overlay;" embedded xr-mode-ui="enabled:false" device-orientation-permission-ui="enabled:false" color-space="sRGB" renderer="colorManagement:true">
+  <a-camera position="0 0 0"></a-camera>
+  <a-entity mindar-image-target="targetIndex:0">
+     <a-plane position="0 0 0" width="2" height="1.2" color="#ffffff" opacity="0"></a-plane>
+  </a-entity>
+  
+  <a-entity mindar-image-target="targetIndex:1">
+     <a-plane position="0 0 0" width="2" height="1.2" color="#ffffff" opacity="0"></a-plane>
+  </a-entity>
+  
+  <a-entity mindar-image-target="targetIndex:2">
+     <a-plane position="0 0 0" width="2" height="1.2" color="#ffffff" opacity="0"></a-plane>
+  </a-entity>
+</a-scene>
+
+<script>
+const dashboard = document.querySelector("#dashboard");
+const status = document.querySelector("#status");
+
+// FIX 1: Grab ALL targets instead of just the first one
+const allTargets = document.querySelectorAll("[mindar-image-target]");
+
+// FIX 2: Loop through every target and give it its own event listeners
+allTargets.forEach((target) => {
+    
+    target.addEventListener("targetFound", () => {
+        // Find which target index was scanned
+        const index = target.getAttribute("mindar-image-target");
+        console.log("MARKER RECOGNISED: " + index);
+        
+        status.innerText = "Target Detected! Opening Dashboard...";
+        dashboard.classList.add("show");
+    });
+
+    target.addEventListener("targetLost", () => {
+        console.log("MARKER LOST");
+        
+        status.innerText = "Explore FouriesM AR Platform";
+        dashboard.classList.remove("show");
+    });
+});
+
+// DEVICE REDIRECTIONS
+document.querySelector("#video").onclick = () => { window.location.href = "video.html"; }
+document.querySelector("#gallery").onclick = () => { window.location.href = "gallery.html"; }
+document.querySelector("#music").onclick = () => { window.location.href = "music.html"; }
+document.querySelector("#leadership").onclick = () => { window.location.href = "video.html"; }
+document.querySelector("#info").onclick = () => { window.location.href = "gallery.html"; }
+document.querySelector("#contact").onclick = () => { window.location.href = "music.html"; }
+document.querySelector("#news").onclick = () => { window.location.href = "video.html"; }
+document.querySelector("#membership").onclick = () => { window.location.href = "gallery.html"; }
+document.querySelector("#history").onclick = () => { window.location.href = "music.html"; }
+</script>
+
+</body>
+</html>

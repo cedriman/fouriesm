@@ -1,0 +1,166 @@
+/* =========================================================
+   PRIMARY BLUE LIQUID-GLASS BUTTON SYSTEM 
+   ========================================================= */
+.liquid-glass-btn {
+    position: relative;
+    padding: 14px 4px !important;
+    border-radius: 20px !important;
+    cursor: pointer;
+    overflow: hidden;
+    text-decoration: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    /* Bootstrap Primary Blue Glass Base Substrate */
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.45), rgba(13, 110, 253, 0.2)) !important;
+    border: 1px solid rgba(13, 110, 253, 0.35) !important;
+    border-top: 1.5px solid rgba(158, 197, 254, 0.5) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    
+    /* Deep glowing blue shadows */
+    box-shadow:
+        0 8px 24px 0 rgba(13, 110, 253, 0.35),
+        inset 0 4px 10px rgba(158, 197, 254, 0.35),
+        inset 0 -4px 10px rgba(0, 43, 110, 0.4),
+        inset 0 0 15px rgba(13, 110, 253, 0.25) !important;
+        
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+                background 0.4s ease,
+                box-shadow 0.4s ease,
+                border-color 0.4s ease !important;
+    z-index: 1;
+    
+    /* Constant subtle beacon pulse */
+    animation: bluePulse 2s infinite ease-in-out;
+}
+
+/* Top Specular Curved Gloss Highlight */
+.liquid-glass-btn::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 8%;
+    width: 84%;
+    height: 38%;
+    border-radius: 100px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.05) 100%);
+    opacity: 0.8;
+    filter: blur(2px);
+    z-index: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease, filter 0.4s ease;
+}
+
+/* Animated Flowing Liquid Light Sheen */
+.shine {
+    position: absolute;
+    top: -50%;
+    left: -150%;
+    width: 100%;
+    height: 200%;
+    background: linear-gradient(105deg,
+            transparent 30%,
+            rgba(255, 255, 255, 0.7) 45%,
+            rgba(255, 255, 255, 1) 50%,
+            rgba(255, 255, 255, 0.7) 55%,
+            transparent 70%);
+    transform: skewX(-20deg) rotate(10deg);
+    transition: none;
+    z-index: 1;
+    pointer-events: none;
+    filter: blur(6px);
+    mix-blend-mode: overlay;
+}
+
+/* Metallic Blue/White Icon Liquid Gradients */
+.liquid-glass-btn i.bi {
+    position: relative;
+    z-index: 2;
+    font-size: 26px !important;
+    margin-bottom: 4px !important;
+    line-height: 1 !important;
+    display: inline-block;
+    background: linear-gradient(to bottom, #ffffff, #9ec5fe) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+    transition: transform 0.3s ease;
+}
+
+/* High Visibility Text Label */
+.liquid-glass-btn .label {
+    position: relative;
+    z-index: 2;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    background: linear-gradient(to bottom, #ffffff, #f1f1f1);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+}
+
+/* Liquid Interactive States (Hover & Active) */
+.liquid-glass-btn:hover {
+    transform: scale(1.06) translateY(-3px) !important;
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.65), rgba(13, 110, 253, 0.3)) !important;
+    border-color: rgba(158, 197, 254, 0.8) !important;
+    box-shadow:
+        0 14px 30px rgba(13, 110, 253, 0.5),
+        inset 0 6px 15px rgba(158, 197, 254, 0.7),
+        inset 0 -6px 15px rgba(0, 43, 110, 0.5),
+        inset 0 0 25px rgba(13, 110, 253, 0.4) !important;
+    animation-play-state: paused; /* Stops pulsing when focusing to click */
+}
+
+.liquid-glass-btn:hover::before {
+    opacity: 1;
+    filter: blur(1px);
+}
+
+/* Activates fluid animation loops */
+.liquid-glass-btn:hover .shine {
+    animation: flow 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.liquid-glass-btn:hover i.bi {
+    transform: translateY(-2px);
+}
+
+@keyframes flow {
+    0% { left: -150%; }
+    100% { left: 200%; }
+}
+
+/* Click/Touch Compression State */
+.liquid-glass-btn:active {
+    transform: scale(0.96) translateY(0) !important;
+    background: linear-gradient(135deg, rgba(10, 80, 180, 0.8), rgba(5, 50, 120, 0.6)) !important;
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.5),
+        inset 0 3px 8px rgba(158, 197, 254, 0.4),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.6) !important;
+    transition-duration: 0.1s !important;
+    animation: none;
+}
+
+/* Glowing Blue Beacon Pulsing Keyframes */
+@keyframes bluePulse {
+    0% {
+        box-shadow: 0 8px 24px 0 rgba(13, 110, 253, 0.35), inset 0 4px 10px rgba(158, 197, 254, 0.35), inset 0 -4px 10px rgba(0, 43, 110, 0.4), inset 0 0 15px rgba(13, 110, 253, 0.25) !important;
+    }
+    50% {
+        box-shadow: 0 8px 32px 6px rgba(13, 110, 253, 0.6), inset 0 4px 12px rgba(158, 197, 254, 0.5), inset 0 -4px 10px rgba(0, 43, 110, 0.4), inset 0 0 20px rgba(13, 110, 253, 0.4) !important;
+        border-color: rgba(158, 197, 254, 0.5) !important;
+    }
+    100% {
+        box-shadow: 0 8px 24px 0 rgba(13, 110, 253, 0.35), inset 0 4px 10px rgba(158, 197, 254, 0.35), inset 0 -4px 10px rgba(0, 43, 110, 0.4), inset 0 0 15px rgba(13, 110, 253, 0.25) !important;
+    }
+}

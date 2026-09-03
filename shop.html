@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Scene Tour with Dynamic 360° Product Viewer</title>
+  
+  <link rel="stylesheet" href="assets/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="assets/css/pannellum.css" />
+  <link rel="stylesheet" href="assets/css/video-js.css" />
+  <link rel="stylesheet" href="assets/css/videojs-vr.css" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+
+  <script src="assets/js/pannellum.js"></script>
+  <script src="assets/js/pdt360DegViewer.js"></script>
+  <script src="assets/js/video.js"></script>
+  <script src="assets/js/videojs-vr.js"></script>
+  
+  <style>
+    body, html {
+      margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+    }
+    #panorama {
+      width: 100vw; height: 100vh;
+    }
+
+    /* Hotspot Wrapper Styles */
+    .product-hotspot {
+      cursor: pointer;
+      z-index: 2;
+      position: absolute;
+      width: 32px;  
+      height: 32px; 
+    }
+
+    /* Visual animated hotspot circle */
+    .product-hotspot-inner {
+      height: 32px;
+      width: 32px;
+      background: #0d6efd;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      animation: pulse 2s infinite;
+      transform: translate(-50%, -50%); 
+    }
+
+    @keyframes pulse {
+      0% { transform: translate(-50%, -50%) scale(0.9); box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.7); }
+      70% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 10px rgba(13, 110, 253, 0); }
+      100% { transform: translate(-50%, -50%) scale(0.9); box-shadow: 0 0 0 0 rgba(13, 110, 253, 0); }
+    }
+
+    /* 360° Canvas Viewport Container */
+    .viewer-container {
+      width: 100%; height: 300px; position: relative;
+      background: #f8f9fa; border-radius: 8px; overflow: hidden; cursor: ew-resize;
+    }
+    .viewer-container canvas {
+      width: 100%; height: 100%; object-fit: contain;
+    }
+    .drag-hint {
+      position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.6); color: white; padding: 4px 12px;
+      border-radius: 20px; font-size: 0.75rem; pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Single viewport container shared by all scenes -->
+  <div id="panorama"></div>
+
+  <!-- Dynamic Bootstrap 5 Card Modal Wrapper -->
+  <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        
+        <div class="card">
+          <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title m-0" id="modalTitle">Interactive 360° View</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="card-body p-3 text-center">
+            
+            <!-- Vanilla 360° Viewport -->
+            <div class="viewer-container mb-3" id="productViewer">
+              <canvas id="productCanvas"></canvas>
+              <div class="drag-hint">↔ Drag to Rotate</div>
+            </div>
+            
+            <h5 class="fw-bold" id="productName">Product Name</h5>
+            <p class="card-text text-muted small" id="productDesc">Product description loading...</p>
+            <button class="btn btn-primary w-100">Add to Cart</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="assets/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // --- 1. DYNAMIC CONFIGURATION & CORE ENGINE VARIABLES ---
+const TOTAL_FRAMES = 36; 
+let activeImages = []; // Dynamically holds the loaded product image array
+let currentFrame = 0;
+
+const canvas = document.getElementById('productCanvas');
+const ctx = canvas.getContext('2d');
+const viewer = document.getElementById('productViewer');
+const modalEl = document.getElementById('productModal');
+const productModal = new bootstrap.Modal(modalEl);
+
+// Dynamic text nodes
+const modalTitle = document.getElementById('modalTitle');
+const productName = document.getElementById('productName');
+const productDesc = document.getElementById('productDesc');
+
+// --- 2. DYNAMIC PRELOADER FUNCTION ---
+function loadProductViewer(config) {
+  activeImages = []; // Clear previous product memory cache
+  currentFrame = 0;  // Reset perspective back to front view
+
+  // Update Card Text fields dynamically
+  modalTitle.innerText = config.title;
+  productName.innerText = config.name;
+  productDesc.innerText = config.desc;
+
+  // Loop and build sequential file targets based on specified folders
+  for (let i = 1; i <= TOTAL_FRAMES; i++) {
+    const img = new Image();
+    
+    if (config.naming === 'padded') {
+      // Converts index to double digits (e.g. img01.jpg, img02.jpg ... img36.jpg)
+      const frameStr = String(i).padStart(2, '0');
+      img.src = `assets/images/${config.folder}/img${frameStr}.jpg`;
+    } else {
+      // Standard numerical names (e.g. 1.jpg, 2.jpg ... 36.jpg)
+      img.src = `assets/images/${config.folder}/${i}.jpg`;
+    }
+
+    // Trigger safe initial rendering inside the canvas frame immediately when frame 1 arrives
+    if (i === 1) {
+      img.onload = () => { drawFrame(0); };
+    }
+    
+    activeImages.push(img);
+  }
+
+  // Display the Bootstrap UI element
+  productModal.show();
+}
+
+// Fixed Canvas Draw Handler with explicit Aspect Ratio containment logic
+function drawFrame(frameIndex) {
+  const currentImg = activeImages[frameIndex];
+  if (!currentImg || !currentImg.complete) return;
+  
+  // Set dimensions factoring in high-DPI screens
+  const dpr = window.devicePixelRatio || 1;
+  const containerWidth = viewer.clientWidth;
+  const containerHeight = viewer.clientHeight;
+  
+  canvas.width = containerWidth * dpr;
+  canvas.height = containerHeight * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, containerWidth, containerHeight);
+  
+  // ASPECT RATIO ENGINE: Simulates CSS "object-fit: contain"
+  const imgRatio = currentImg.width / currentImg.height;
+  const containerRatio = containerWidth / containerHeight;
+  
+  let renderWidth, renderHeight, xOffset, yOffset;
+  
+  if (imgRatio > containerRatio) {
+    renderWidth = containerWidth;
+    renderHeight = containerWidth / imgRatio;
+    xOffset = 0;
+    yOffset = (containerHeight - renderHeight) / 2;
+  } else {
+    renderHeight = containerHeight;
+    renderWidth = containerHeight * imgRatio;
+    xOffset = (containerWidth - renderWidth) / 2;
+    yOffset = 0;
+  }
+  
+  ctx.drawImage(currentImg, xOffset, yOffset, renderWidth, renderHeight);
+}
+
+// --- 3. DRAG & INTERACTION LOGIC (VANILLA) ---
+let isDragging = false;
+let startX = 0;
+
+function handleStart(e) {
+  isDragging = true;
+  startX = e.clientX || e.touches[0].clientX;
+}
+
+function handleMove(e) {
+  if (!isDragging) return;
+  const clientX = e.clientX || e.touches[0].clientX;
+  const dx = clientX - startX;
+  
+  if (Math.abs(dx) > 12) { // 12px drag sensitivity
+    if (dx > 0) {
+      currentFrame = (currentFrame + 1) % TOTAL_FRAMES;
+    } else {
+      currentFrame = (currentFrame - 1 + TOTAL_FRAMES) % TOTAL_FRAMES;
+    }
+    drawFrame(currentFrame);
+    startX = clientX; 
+  }
+}
+
+function handleEnd() { isDragging = false; }
+
+// Desktop Mouse Events
+viewer.addEventListener('mousedown', handleStart);
+window.addEventListener('mousemove', handleMove);
+window.addEventListener('mouseup', handleEnd);
+
+// Mobile Touch Events
+viewer.addEventListener('touchstart', handleStart);
+viewer.addEventListener('touchmove', handleMove);
+viewer.addEventListener('touchend', handleEnd);
+
+// Recalculate dimensions on screen size shifts
+window.addEventListener('resize', () => { 
+  if (modalEl.classList.contains('show')) drawFrame(currentFrame); 
+});
+
+// Force refresh frame rendering when the modal animation completes
+modalEl.addEventListener('shown.bs.modal', () => { 
+  drawFrame(currentFrame); 
+});
+
+
+// --- 4. PANNELLUM MULTI-SCENE VIRTUAL TOUR RUNTIME ---
+
+// Custom Hotspot DOM constructor function
+function customStyle(hotSpotDiv) {
+  hotSpotDiv.classList.add('product-hotspot');
+  const innerCircle = document.createElement('div');
+  innerCircle.classList.add('product-hotspot-inner');
+  hotSpotDiv.appendChild(innerCircle);
+}
+
+// Open Modal logic handler map for Product 1
+function openProduct1() {
+  loadProductViewer({
+    title: "Product Showcase 01",
+    name: "Premium Sport Sneakers",
+    desc: "Designed with responsive structural soles and advanced lightweight performance mesh fabrics.",
+    folder: "shoes",
+    naming: "standard" // Looks for 1.jpg -> 36.jpg
+  });
+}
+
+// Open Modal logic handler map for Product 2
+function openProduct2() {
+  loadProductViewer({
+    title: "Product Showcase 02",
+    name: "Classic Heritage Loafers",
+    desc: "Handcrafted top-grain formal leather footwear with weather-sealed stitching.",
+    folder: "shoes1",
+    naming: "padded" // Looks for img01.jpg -> img36.jpg
+  });
+}
+
+// Initialising Pannellum Global Tour Instance 
+pannellum.viewer('panorama', {
+  "default": {
+    "firstScene": "street",
+    "autoLoad": true,
+  },
+  "scenes": {
+    // SCENE 1: Street View
+    "street": {
+      "type": "equirectangular",
+      "panorama": "assets/images/twin2.jpg", 
+      "hotSpots": [
+        {
+          "pitch": 0.0,
+          "yaw": 0.0,
+          "type": "scene",
+          "text": "Enter Shop",
+          "sceneId": "shop" 
+        }
+      ]
+    },
+    // SCENE 2: Inside Shop View
+    "shop": {
+      "type": "equirectangular",
+      "panorama": "assets/images/twin3.jpg", 
+      "hotSpots": [
+        // Product Hotspot 1 (Folder: shoes, Files: 1.jpg - 36.jpg)
+        {
+          "pitch": -2.1,
+          "yaw": 200.0,
+          "createTooltipFunc": customStyle,
+          "clickHandlerFunc": openProduct1
+        },
+        // Product Hotspot 2 (Folder: shoes1, Files: img01.jpg - img36.jpg)
+        {
+          "pitch": -2.1,
+          "yaw": 25.0,
+          "createTooltipFunc": customStyle,
+          "clickHandlerFunc": openProduct2
+        },
+        // Exit Hotspot (Returns viewer context back out to the street environment)
+        {
+          "pitch": -2.1,
+          "yaw": 90.0,
+          "type": "scene",
+          "text": "Exit to Street",
+          "sceneId": "street"
+        }
+      ]
+    }
+  }
+});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>360° Cinematic Video Player</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Video.js CSS -->
+    <link href="assets/css/video-js.css" rel="stylesheet" />
+    <!-- Video.js VR CSS -->
+    <link href="assets/css/videojs-vr.css" rel="stylesheet">
+
+    <style>
+        /* Reset for Full Screen */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+
+        /* Force Video.js to fill the viewport */
+        .video-js {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Custom Start/End Overlay */
+        #start-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 999;
+            background: radial-gradient(circle at center, rgba(15, 23, 42, 0.8) 0%, rgba(0, 0, 0, 0.95) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+
+        /* Floating HUD (Head-Up Display) */
+        #hud-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 100;
+            pointer-events: none; /* Let clicks pass through to drag video */
+            opacity: 0; /* Hidden initially until play starts */
+            transition: opacity 0.5s ease;
+        }
+
+        .hud-badge {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            pointer-events: auto; /* Re-enable clicks for buttons */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LAYER 1: The Start Overlay -->
+    <div id="start-overlay">
+        <div class="text-center text-white p-3">
+            <h1 id="overlay-title" class="display-4 fw-bold mb-4">Virtual Tour Experience</h1>
+            <p id="overlay-desc" class="lead mb-5 opacity-75">Put on your headset or drag to explore in 360°.</p>
+            
+            <button id="play-btn" class="btn btn-primary btn-lg rounded-pill px-5 py-3 shadow-lg">
+                <span id="play-btn-text" class="h5 m-0">▶ Start Experience</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- LAYER 2: HUD (Title & Controls) -->
+    <div id="hud-layer" class="p-4 d-flex justify-content-between align-items-start">
+        <div class="hud-badge p-3 rounded-3">
+            <h5 id="hud-title" class="m-0 fw-bold">📍 Main Atrium</h5>
+            <small id="hud-subtitle" class="text-white-50">4K 360° Video Scan</small>
+        </div>
+        
+        <div class="d-flex gap-2">
+            <!-- Next Scene Button -->
+            <button id="next-btn" class="btn btn-outline-light rounded-pill hud-badge px-3 py-2">
+                Next Scene ➔
+            </button>
+            <!-- Exit/Close Button -->
+            <button class="btn btn-outline-light rounded-circle hud-badge" style="width: 45px; height: 45px;" onclick="history.back()">
+                ✕
+            </button>
+        </div>
+    </div>
+
+    <!-- LAYER 3: VideoJS Player -->
+    <video id="video360" class="video-js vjs-default-skin vjs-big-play-centered" 
+           crossorigin="anonymous" playsinline>
+    </video>
+
+    <!-- Scripts -->
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/video.js"></script>
+    <script src="assets/js/videojs-vr.js"></script>
+
+    <script>
+        // 1. Define Playlist Array
+        var playlist = [
+            {
+                src: "assets/video/indoor.mp4",
+                title: "📍 Main Atrium",
+                subtitle: "4K 360° Video Scan"
+            },
+            {
+                src: "assets/video/outdoor.mp4",
+                title: "📍 Courtyard Garden",
+                subtitle: "Outdoor 360° Experience"
+            }
+        ];
+        
+        var currentTrack = 0;
+
+        // 2. Initialize Player
+        var player = videojs('video360', {
+            controls: true,
+            autoplay: false,
+            preload: 'auto',
+            fluid: false
+        });
+
+        // 3. Initialize VR Plugin
+        player.vr({
+            projection: '360',
+            debug: false,
+            forceCardboard: false
+        });
+
+        // 4. Track Loading Function
+        function loadTrack(index) {
+            if (index >= playlist.length) return;
+            
+            // Set the video source
+            player.src({ src: playlist[index].src, type: 'video/mp4' });
+            
+            // Update HUD text layer
+            document.getElementById('hud-title').innerText = playlist[index].title;
+            document.getElementById('hud-subtitle').innerText = playlist[index].subtitle;
+
+            // Hide/Show Next button depending on if it's the last video
+            if (index === playlist.length - 1) {
+                document.getElementById('next-btn').style.setProperty('display', 'none', 'important');
+            } else {
+                document.getElementById('next-btn').style.display = 'block';
+            }
+        }
+
+        // Initialize the first video source on page load
+        loadTrack(currentTrack);
+
+        // 5. Handle Overlay & Playback Interaction
+        const startOverlay = document.getElementById('start-overlay');
+        const playBtn = document.getElementById('play-btn');
+        const hudLayer = document.getElementById('hud-layer');
+        const nextBtn = document.getElementById('next-btn');
+
+        playBtn.addEventListener('click', function() {
+            player.play().then(() => {
+                // Fade out overlay
+                startOverlay.style.opacity = '0';
+                setTimeout(() => { startOverlay.style.display = 'none'; }, 500);
+                
+                // Show HUD
+                hudLayer.style.opacity = '1';
+            }).catch(error => {
+                console.error("Autoplay prevented:", error);
+                alert("Please interact with the document first.");
+            });
+        });
+
+        // 6. Handle Moving to Next Video
+        function nextVideo() {
+            currentTrack++;
+            if (currentTrack < playlist.length) {
+                loadTrack(currentTrack);
+                player.play();
+            } else {
+                // End of Experience Screen
+                document.getElementById('overlay-title').innerText = "Tour Completed";
+                document.getElementById('overlay-desc').innerText = "Thank you for exploring our virtual environment.";
+                document.getElementById('play-btn-text').innerText = "🔄 Restart Tour";
+                
+                // Reset track index back to start for replay functionality
+                currentTrack = 0;
+                loadTrack(currentTrack);
+
+                // Show ending screen
+                startOverlay.style.display = 'flex';
+                setTimeout(() => { startOverlay.style.opacity = '1'; }, 10);
+                hudLayer.style.opacity = '0';
+            }
+        }
+
+        // Trigger next video automatically when current one ends
+        player.on('ended', function() {
+            nextVideo();
+        });
+
+        // Trigger next video manually when next button is pressed
+        nextBtn.addEventListener('click', function() {
+            nextVideo();
+        });
+
+    </script>
+</body>
+</html>
