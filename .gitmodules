@@ -1,1 +1,3 @@
-# This file has been cleared - submodules removed
+[submodule "advapano"]
+    path = advapano
+    url = https://github.com/cedriman/advapano
